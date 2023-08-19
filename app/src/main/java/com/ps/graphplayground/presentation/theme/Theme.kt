@@ -1,4 +1,4 @@
-package com.ps.graphplayground.ui.theme
+package com.ps.graphplayground.presentation.theme
 
 import android.app.Activity
 import android.os.Build

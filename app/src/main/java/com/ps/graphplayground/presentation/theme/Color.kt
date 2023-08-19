@@ -1,4 +1,4 @@
-package com.ps.graphplayground.ui.theme
+package com.ps.graphplayground.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
