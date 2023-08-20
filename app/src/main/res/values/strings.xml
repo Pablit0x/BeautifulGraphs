@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">GraphPlayground</string>
+    <string name="show_settings">Show settings</string>
+    <string name="dotted_line">Dotted line</string>
+    <string name="show_grid">Show grid</string>
+    <string name="steps">Steps</string>
+    <string name="points">Points</string>
 </resources>

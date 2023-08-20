@@ -3,11 +3,9 @@ package com.ps.graphplayground.presentation.graph_screen
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,7 +23,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
@@ -36,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -62,26 +61,26 @@ import co.yml.charts.ui.linechart.model.LineType
 import co.yml.charts.ui.linechart.model.SelectionHighlightPoint
 import co.yml.charts.ui.linechart.model.SelectionHighlightPopUp
 import co.yml.charts.ui.linechart.model.ShadowUnderLine
+import com.ps.graphplayground.R
 import com.ps.graphplayground.presentation.components.PointsItem
 
 @Composable
 fun GraphScreen() {
-    var showPoints by remember { mutableStateOf(false) }
+    var showPoints by remember { mutableStateOf(true) }
     var showSettings by remember { mutableStateOf(false) }
     var steps by remember { mutableStateOf(5) }
     var dataPoints by remember {
         mutableStateOf(
             listOf(
                 Point(x = 0f, y = 40f),
-                Point(x = 1f, y = 20f),
+                Point(x = 1f, y = -20f),
                 Point(x = 2f, y = 0f),
                 Point(x = 3f, y = 20f),
                 Point(x = 4f, y = 40f)
             )
         )
     }
-
-    var copy = dataPoints.toMutableList()
+    val dataPointsCopy = dataPoints.toMutableList()
 
     var xAxisStepSize by remember { mutableStateOf(100.dp) }
 
@@ -142,7 +141,9 @@ fun GraphScreen() {
     )
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
     ) {
         LineChart(
             modifier = Modifier
@@ -157,10 +158,10 @@ fun GraphScreen() {
             ElevatedButton(
                 shape = RoundedCornerShape(40),
                 onClick = { showPoints = !showPoints },
-                modifier = Modifier.weight(2f)
+                modifier = Modifier.weight(2.5f)
             ) {
                 Text(
-                    "Points",
+                    text = stringResource(id = R.string.points),
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
@@ -171,7 +172,7 @@ fun GraphScreen() {
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(0.5f))
 
             Box(modifier = Modifier.weight(2f)) {
                 androidx.compose.animation.AnimatedVisibility(
@@ -184,8 +185,8 @@ fun GraphScreen() {
                     ) {
                         Button(
                             onClick = {
-                                copy.add(Point(x = copy.last().x + 1f, y = copy.last().y + 1f))
-                                dataPoints = copy
+                                dataPointsCopy.add(Point(x = dataPointsCopy.last().x + 1f, y = dataPointsCopy.last().y + 1f))
+                                dataPoints = dataPointsCopy
                             }, colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.primary
@@ -198,8 +199,8 @@ fun GraphScreen() {
 
                         Button(
                             onClick = {
-                                copy.removeLast()
-                                dataPoints = copy
+                                dataPointsCopy.removeLast()
+                                dataPoints = dataPointsCopy
                             }, colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.errorContainer,
                                 contentColor = MaterialTheme.colorScheme.error
@@ -212,7 +213,8 @@ fun GraphScreen() {
             }
         }
 
-        LazyColumn(modifier = Modifier.fillMaxWidth()
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
 
@@ -221,21 +223,18 @@ fun GraphScreen() {
                     visible = showPoints
                 ) {
                     PointsItem(point = item, index = index, xOnChange = {
-                        copy[index] = Point(x = it, y = item.y)
-                        dataPoints = copy
+                        dataPointsCopy[index] = Point(x = it, y = item.y)
+                        dataPoints = dataPointsCopy
                     }, yOnChange = {
-                        copy[index] = Point(x = item.x, y = it)
-                        dataPoints = copy
+                        dataPointsCopy[index] = Point(x = item.x, y = it)
+                        dataPoints = dataPointsCopy
                     })
                 }
             }
 
             item {
-
-                ElevatedButton(onClick = { showSettings = !showSettings }) {
-                    Text("Show settings")
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(imageVector = Icons.Default.Settings, contentDescription = null)
+                TextButton(onClick = { showSettings = !showSettings }) {
+                    Text(stringResource(id = R.string.show_settings))
                 }
 
                 AnimatedVisibility(visible = showSettings) {
@@ -248,7 +247,8 @@ fun GraphScreen() {
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "Dotted line", fontWeight = FontWeight.Bold,
+                                text = stringResource(id = R.string.dotted_line),
+                                fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                             )
                             Switch(checked = isDotted, onCheckedChange = { isDotted = it })
@@ -260,7 +260,8 @@ fun GraphScreen() {
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = "Show grid", fontWeight = FontWeight.Bold,
+                                text = stringResource(id = R.string.show_grid),
+                                fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                             )
                             Switch(checked = gridLines != null, onCheckedChange = {
@@ -269,7 +270,7 @@ fun GraphScreen() {
                         }
 
                         OutlinedTextField(modifier = Modifier.fillMaxWidth(),
-                            value = "Steps $steps",
+                            value = "${stringResource(id = R.string.steps)} $steps",
                             onValueChange = {},
                             enabled = false,
                             textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
@@ -294,35 +295,6 @@ fun GraphScreen() {
                     }
                 }
             }
-//
-//            item {
-//                Row(
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    modifier = Modifier.fillMaxWidth()
-//                ) {
-//                    Text(
-//                        text = "Dotted line", fontWeight = FontWeight.Bold,
-//                        fontSize = 14.sp,
-//                    )
-//                    Switch(checked = isDotted, onCheckedChange = { isDotted = it })
-//                }
-//            }
-//
-//            item {
-//                Row(
-//                    verticalAlignment = Alignment.CenterVertically,
-//                    horizontalArrangement = Arrangement.SpaceBetween,
-//                    modifier = Modifier.fillMaxWidth()
-//                ) {
-//                    Text(
-//                        text = "Show grid", fontWeight = FontWeight.Bold,
-//                        fontSize = 14.sp,
-//                    )
-//                    Switch(checked = gridLines != null,
-//                        onCheckedChange = { gridLines = if (it) GridLines(Color.Gray) else null })
-//                }
-//            }
         }
 
     }
