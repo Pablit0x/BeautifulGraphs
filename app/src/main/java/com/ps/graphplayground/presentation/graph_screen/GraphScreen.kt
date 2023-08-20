@@ -10,6 +10,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import co.yml.charts.common.extensions.formatToSinglePrecision
+
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -34,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.yml.charts.axis.AxisData
 import co.yml.charts.common.model.Point
-import co.yml.charts.ui.barchart.models.BarChartData
 import co.yml.charts.ui.linechart.LineChart
 import co.yml.charts.ui.linechart.model.GridLines
 import co.yml.charts.ui.linechart.model.IntersectionPoint
@@ -46,6 +50,8 @@ import co.yml.charts.ui.linechart.model.LineType
 import co.yml.charts.ui.linechart.model.SelectionHighlightPoint
 import co.yml.charts.ui.linechart.model.SelectionHighlightPopUp
 import co.yml.charts.ui.linechart.model.ShadowUnderLine
+import com.ps.graphplayground.presentation.components.PointsItem
+import java.text.DecimalFormat
 
 @Composable
 fun GraphScreen() {
@@ -60,10 +66,19 @@ fun GraphScreen() {
                 Point(x = 2f, y = 0f),
                 Point(x = 3f, y = 20f),
                 Point(x = 4f, y = 40f),
-                Point(x = 5f, y = 20f)
+                Point(x = 5f, y = 20f),
+                Point(x = 6f, y = 40f),
+                Point(x = 7f, y = 20f),
+                Point(x = 8f, y = 0f),
+                Point(x = 9f, y = 20f),
+                Point(x = 10f, y = 40f),
+                Point(x = 11f, y = 20f)
             )
         )
     }
+
+    var copy = dataPoints.toMutableList()
+
     var xAxisStepSize by remember { mutableStateOf(100.dp) }
     var xAxisBackgroundColor by remember { mutableStateOf(Color.Transparent) }
 
@@ -76,8 +91,9 @@ fun GraphScreen() {
     var xAxisLabelFontSize by remember { mutableStateOf(12.sp) }
     var yAxisLabelFontSize by remember { mutableStateOf(12.sp) }
 
-    var lineType by remember { mutableStateOf(LineType.SmoothCurve(isDotted = false)) }
-    var gridLines : GridLines? by remember { mutableStateOf(null) }
+    var isDotted by remember { mutableStateOf(false) }
+    var lineType by remember(key1 = isDotted) { mutableStateOf(LineType.SmoothCurve(isDotted = isDotted)) }
+    var gridLines: GridLines? by remember { mutableStateOf(null) }
 
 
     val xAxisData =
@@ -88,15 +104,15 @@ fun GraphScreen() {
             .axisLabelColor(MaterialTheme.colorScheme.primary).axisLabelFontSize(xAxisLabelFontSize)
             .build()
 
-    val yAxisData =
-        AxisData.Builder().axisStepSize(yAxisStepSize).backgroundColor(yAxisBackgroundColor)
-            .steps(steps).labelData { value ->
-                val yScale = 100 / steps
-                (value * yScale).toString()
-            }.labelAndAxisLinePadding(yAxisLabelAndAxisLinePadding)
-            .axisLineColor(MaterialTheme.colorScheme.primary)
-            .axisLabelColor(MaterialTheme.colorScheme.primary).axisLabelFontSize(yAxisLabelFontSize)
-            .build()
+    val yAxisData = AxisData.Builder().backgroundColor(yAxisBackgroundColor).steps(steps)
+        .labelAndAxisLinePadding(yAxisLabelAndAxisLinePadding).labelData { i ->
+            val yMin = dataPoints.minOf { it.y }
+            val yMax = dataPoints.maxOf { it.y }
+            val yScale = (yMax - yMin) / steps
+            ((i * yScale) + yMin).formatToSinglePrecision()
+        }.axisLineColor(MaterialTheme.colorScheme.primary)
+        .axisLabelColor(MaterialTheme.colorScheme.primary).axisLabelFontSize(yAxisLabelFontSize)
+        .build()
 
     val lineChartData = LineChartData(
         linePlotData = LinePlotData(
@@ -126,7 +142,9 @@ fun GraphScreen() {
     )
 
     Column(
-        modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         LineChart(
             modifier = Modifier
@@ -134,44 +152,64 @@ fun GraphScreen() {
                 .height(200.dp), lineChartData = lineChartData
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedTextField(modifier = Modifier.padding(16.dp),
-            value = "Steps $steps",
-            onValueChange = {},
-            enabled = false,
-            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
-            trailingIcon = {
-                IconButton(onClick = { steps++ }) {
-                    Icon(imageVector = Icons.Default.KeyboardArrowUp, contentDescription = null)
-                }
-            },
-            leadingIcon = {
-                IconButton(onClick = { steps-- }) {
-                    Icon(imageVector = Icons.Default.KeyboardArrowDown, contentDescription = null)
-                }
-            })
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        LazyColumn(
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = "isDotted")
-            Switch(checked = lineType.isDotted,
-                onCheckedChange = { lineType = LineType.SmoothCurve(isDotted = it) })
-        }
+            itemsIndexed(dataPoints) { index, item ->
+                PointsItem(point = item, index = index, xOnChange = {
+                    copy[index] = Point(x = it, y = item.y)
+                    dataPoints = copy
+                }, yOnChange = {
+                    copy[index] = Point(x = item.x, y = it)
+                    dataPoints = copy
+                })
+            }
+            item {
+                OutlinedTextField(modifier = Modifier.padding(16.dp),
+                    value = "Steps $steps",
+                    onValueChange = {},
+                    enabled = false,
+                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
+                    trailingIcon = {
+                        IconButton(onClick = { steps++ }) {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowUp,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    leadingIcon = {
+                        IconButton(onClick = { steps-- }) {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = null
+                            )
+                        }
+                    })
+            }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(text = "gridLines")
-            Switch(checked = gridLines == null,
-                onCheckedChange = { gridLines = if(it) null else GridLines(Color.Gray) })
+            item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(text = "Dotted line")
+                    Switch(checked = isDotted, onCheckedChange = { isDotted = it })
+                }
+            }
+
+            item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(text = "Show grid")
+                    Switch(checked = gridLines != null,
+                        onCheckedChange = { gridLines = if (it) GridLines(Color.Gray) else null })
+                }
+            }
         }
 
     }
-
 }
