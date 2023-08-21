@@ -2,11 +2,8 @@ package com.ps.graphplayground.presentation.graph_screen
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,12 +32,16 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -50,7 +51,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,7 +58,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.yml.charts.axis.AxisData
@@ -78,7 +80,6 @@ import co.yml.charts.ui.linechart.model.ShadowUnderLine
 import com.ps.graphplayground.R
 import com.ps.graphplayground.presentation.components.ColorPicker
 import com.ps.graphplayground.presentation.components.PointsItem
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
@@ -117,25 +118,28 @@ fun GraphScreen() {
 
     var showGridLines by remember { mutableStateOf(false) }
     var isDotted by remember { mutableStateOf(false) }
-    var lineType by remember(key1 = isDotted) { mutableStateOf(LineType.SmoothCurve(isDotted = isDotted)) }
+    var lineType: LineType by remember(key1 = isDotted) {
+        mutableStateOf(
+            LineType.SmoothCurve(
+                isDotted = isDotted
+            )
+        )
+    }
     var gridLines: GridLines by remember { mutableStateOf(GridLines(initialGridLinesColor)) }
 
 
     val xAxisData = AxisData.Builder().axisStepSize(xAxisStepSize).steps(dataPoints.size - 1)
-        .labelData { value -> value.toString() }
-        .labelAndAxisLinePadding(15.dp).axisLineColor(xAxisLineColor)
-        .axisLabelColor(MaterialTheme.colorScheme.primary).axisLabelFontSize(12.sp)
-        .build()
+        .labelData { value -> value.toString() }.labelAndAxisLinePadding(15.dp)
+        .axisLineColor(xAxisLineColor).axisLabelColor(MaterialTheme.colorScheme.primary)
+        .axisLabelFontSize(12.sp).build()
 
-    val yAxisData =
-        AxisData.Builder().steps(steps).labelAndAxisLinePadding(20.dp)
-            .labelData { i ->
-                val yMin = dataPoints.minOf { it.y }
-                val yMax = dataPoints.maxOf { it.y }
-                val yScale = (yMax - yMin) / steps
-                ((i * yScale) + yMin).formatToSinglePrecision()
-            }.axisLineColor(yAxisLineColor).axisLabelColor(MaterialTheme.colorScheme.primary)
-            .axisLabelFontSize(12.sp).build()
+    val yAxisData = AxisData.Builder().steps(steps).labelAndAxisLinePadding(20.dp).labelData { i ->
+        val yMin = dataPoints.minOf { it.y }
+        val yMax = dataPoints.maxOf { it.y }
+        val yScale = (yMax - yMin) / steps
+        ((i * yScale) + yMin).formatToSinglePrecision()
+    }.axisLineColor(yAxisLineColor).axisLabelColor(MaterialTheme.colorScheme.primary)
+        .axisLabelFontSize(12.sp).build()
 
     val lineChartData = LineChartData(
         linePlotData = LinePlotData(
@@ -161,7 +165,7 @@ fun GraphScreen() {
         backgroundColor = lineChartBackgroundColor,
         xAxisData = xAxisData,
         yAxisData = yAxisData,
-        gridLines = if(showGridLines) gridLines else null
+        gridLines = if (showGridLines) gridLines else null
     )
 
     Column(
@@ -220,8 +224,7 @@ fun GraphScreen() {
                             onClick = {
                                 dataPoints.add(
                                     Point(
-                                        x = dataPoints.last().x + 1f,
-                                        y = dataPoints.last().y + 1f
+                                        x = dataPoints.last().x + 1f, y = dataPoints.last().y + 1f
                                     )
                                 )
                             }, colors = ButtonDefaults.buttonColors(
@@ -305,7 +308,7 @@ fun GraphScreen() {
                         .fillMaxWidth()
                         .fillMaxHeight(0.5f)
                         .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -318,13 +321,12 @@ fun GraphScreen() {
                             fontSize = 16.sp,
                             modifier = Modifier.weight(2f)
                         )
-                        Switch(
-                            thumbContent = {
-                                Icon(
-                                    imageVector = if (isDotted) Icons.Default.Check else Icons.Default.Close,
-                                    contentDescription = null
-                                )
-                            },
+                        Switch(thumbContent = {
+                            Icon(
+                                imageVector = if (isDotted) Icons.Default.Check else Icons.Default.Close,
+                                contentDescription = null
+                            )
+                        },
                             checked = isDotted,
                             onCheckedChange = { isDotted = it },
                             modifier = Modifier.weight(1f)
@@ -429,8 +431,80 @@ fun GraphScreen() {
                                 showColorPicker = true
                             })
                     }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        var isLineMenuExpended by remember { mutableStateOf(false) }
+
+                        var lineTypes = remember{ mutableStateListOf<LineTypeMenuItem>(
+                            LineTypeMenuItem(
+                                text = "Straight",
+                                LineType.Straight(isDotted = isDotted)
+                            ),
+                            LineTypeMenuItem(
+                                text = "Smooth",
+                                LineType.SmoothCurve(isDotted = isDotted)
+                            )
+                        )}
+
+                        Text(
+                            text = stringResource(id = R.string.line_type),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            modifier = Modifier.weight(2f)
+                        )
+
+                        var selectedText by remember { mutableStateOf("Smooth") }
+
+                        Box(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            ExposedDropdownMenuBox(
+                                expanded = isLineMenuExpended,
+                                onExpandedChange = {
+                                    isLineMenuExpended = !isLineMenuExpended
+                                }
+                            ) {
+                                OutlinedTextField(
+                                    shape = RoundedCornerShape(20),
+                                    value = selectedText,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    textStyle = TextStyle.Default.copy(
+                                        fontSize = 14.sp,
+                                        textAlign = TextAlign.Center
+                                    ),
+                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isLineMenuExpended) },
+                                    modifier = Modifier.menuAnchor()
+                                )
+
+                                ExposedDropdownMenu(
+                                    expanded = isLineMenuExpended,
+                                    onDismissRequest = { isLineMenuExpended = false }
+                                ) {
+                                    lineTypes.forEach { item ->
+                                        DropdownMenuItem(
+                                            text = { Text(text = item.text, textAlign = TextAlign.Center) },
+                                            onClick = {
+                                                selectedText = item.text
+                                                lineType = item.type
+                                                isLineMenuExpended = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+data class LineTypeMenuItem(
+    val text: String, val type: LineType
+)
