@@ -3,19 +3,19 @@ package com.ps.graphplayground.presentation.graph_screen
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import co.yml.charts.common.extensions.formatToSinglePrecision
-
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -25,17 +25,20 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -45,10 +48,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import co.yml.charts.axis.AxisData
+import co.yml.charts.common.extensions.formatToSinglePrecision
 import co.yml.charts.common.model.Point
 import co.yml.charts.ui.linechart.LineChart
 import co.yml.charts.ui.linechart.model.GridLines
@@ -64,20 +67,19 @@ import co.yml.charts.ui.linechart.model.ShadowUnderLine
 import com.ps.graphplayground.R
 import com.ps.graphplayground.presentation.components.PointsItem
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GraphScreen() {
     var showPoints by remember { mutableStateOf(true) }
     var showSettings by remember { mutableStateOf(false) }
     var steps by remember { mutableStateOf(5) }
-    var dataPoints by remember {
-        mutableStateOf(
-            listOf(
-                Point(x = 0f, y = 40f),
-                Point(x = 1f, y = -20f),
-                Point(x = 2f, y = 0f),
-                Point(x = 3f, y = 20f),
-                Point(x = 4f, y = 40f)
-            )
+    var dataPoints = remember {
+        mutableStateListOf(
+            Point(x = 0f, y = 40f),
+            Point(x = 1f, y = -20f),
+            Point(x = 2f, y = 0f),
+            Point(x = 3f, y = 20f),
+            Point(x = 4f, y = 40f)
         )
     }
     val dataPointsCopy = dataPoints.toMutableList()
@@ -143,7 +145,8 @@ fun GraphScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         LineChart(
             modifier = Modifier
@@ -152,8 +155,7 @@ fun GraphScreen() {
         )
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         ) {
             ElevatedButton(
                 shape = RoundedCornerShape(40),
@@ -185,8 +187,12 @@ fun GraphScreen() {
                     ) {
                         Button(
                             onClick = {
-                                dataPointsCopy.add(Point(x = dataPointsCopy.last().x + 1f, y = dataPointsCopy.last().y + 1f))
-                                dataPoints = dataPointsCopy
+                                dataPoints.add(
+                                    Point(
+                                        x = dataPointsCopy.last().x + 1f,
+                                        y = dataPointsCopy.last().y + 1f
+                                    )
+                                )
                             }, colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 contentColor = MaterialTheme.colorScheme.primary
@@ -199,8 +205,7 @@ fun GraphScreen() {
 
                         Button(
                             onClick = {
-                                dataPointsCopy.removeLast()
-                                dataPoints = dataPointsCopy
+                                dataPoints.removeLast()
                             }, colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.errorContainer,
                                 contentColor = MaterialTheme.colorScheme.error
@@ -214,7 +219,10 @@ fun GraphScreen() {
         }
 
         LazyColumn(
-            modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(9f),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
 
@@ -223,79 +231,136 @@ fun GraphScreen() {
                     visible = showPoints
                 ) {
                     PointsItem(point = item, index = index, xOnChange = {
-                        dataPointsCopy[index] = Point(x = it, y = item.y)
-                        dataPoints = dataPointsCopy
+                        dataPoints[index] = Point(x = it, y = item.y)
                     }, yOnChange = {
-                        dataPointsCopy[index] = Point(x = item.x, y = it)
-                        dataPoints = dataPointsCopy
+                        dataPoints[index] = Point(x = item.x, y = it)
                     })
-                }
-            }
-
-            item {
-                TextButton(onClick = { showSettings = !showSettings }) {
-                    Text(stringResource(id = R.string.show_settings))
-                }
-
-                AnimatedVisibility(visible = showSettings) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.dotted_line),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                            )
-                            Switch(checked = isDotted, onCheckedChange = { isDotted = it })
-                        }
-
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = stringResource(id = R.string.show_grid),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                            )
-                            Switch(checked = gridLines != null, onCheckedChange = {
-                                gridLines = if (it) GridLines(Color.Gray) else null
-                            })
-                        }
-
-                        OutlinedTextField(modifier = Modifier.fillMaxWidth(),
-                            value = "${stringResource(id = R.string.steps)} $steps",
-                            onValueChange = {},
-                            enabled = false,
-                            textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center),
-                            trailingIcon = {
-                                IconButton(onClick = { steps++ }) {
-                                    Icon(
-                                        imageVector = Icons.Default.KeyboardArrowUp,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            },
-                            leadingIcon = {
-                                IconButton(onClick = { steps-- }) {
-                                    Icon(
-                                        imageVector = Icons.Default.KeyboardArrowDown,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                            })
-                    }
                 }
             }
         }
 
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f), contentAlignment = Alignment.BottomCenter
+        ) {
+            TextButton(onClick = { showSettings = !showSettings }) {
+                Text(stringResource(id = R.string.show_settings))
+            }
+        }
+
+        if (showSettings) {
+            val sheetScaffoldState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = true
+            )
+
+            ModalBottomSheet(sheetState = sheetScaffoldState,
+                onDismissRequest = { showSettings = false },
+                dragHandle = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            stringResource(id = R.string.customise_chart),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Divider()
+                    }
+                }) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.5f)
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.dotted_line),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            modifier = Modifier.weight(2f)
+                        )
+                        Switch(
+                            checked = isDotted,
+                            onCheckedChange = { isDotted = it },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.show_grid),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            modifier = Modifier.weight(2f)
+                        )
+                        Switch(checked = gridLines != null, onCheckedChange = {
+                            gridLines = if (it) GridLines(Color.LightGray) else null
+                        }, modifier = Modifier.weight(1f))
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.steps),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            modifier = Modifier.weight(2f)
+                        )
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            IconButton(
+                                onClick = { steps++ }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowUp,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.border(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.outline,
+                                        shape = RoundedCornerShape(100)
+                                    )
+                                )
+                            }
+                            Text(text = steps.toString())
+                            IconButton(
+                                onClick = { steps-- }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.border(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.outline,
+                                        shape = RoundedCornerShape(100)
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
