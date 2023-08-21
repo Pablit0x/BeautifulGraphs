@@ -89,12 +89,13 @@ fun GraphScreen() {
     var showPoints by remember { mutableStateOf(true) }
     var showSettings by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
-    var initialColor = MaterialTheme.colorScheme.primary
-    var initialBackgroundColor = MaterialTheme.colorScheme.surface
 
-    val scope = rememberCoroutineScope()
+    val initialColor = MaterialTheme.colorScheme.primary
+    val initialBackgroundColor = MaterialTheme.colorScheme.surface
+    val initialGridLinesColor = MaterialTheme.colorScheme.outline
+
     var steps by remember { mutableStateOf(5) }
-    var dataPoints = remember {
+    val dataPoints = remember {
         mutableStateListOf(
             Point(x = 0f, y = 40f),
             Point(x = 1f, y = -20f),
@@ -103,12 +104,9 @@ fun GraphScreen() {
             Point(x = 4f, y = 40f)
         )
     }
-    val dataPointsCopy = dataPoints.toMutableList()
 
     var xAxisStepSize by remember { mutableStateOf(100.dp) }
 
-    var xAxisLabelAndAxisLinePadding by remember { mutableStateOf(15.dp) }
-    var yAxisLabelAndAxisLinePadding by remember { mutableStateOf(20.dp) }
 
     var chartLineColor by remember { mutableStateOf(initialColor) }
     var xAxisLineColor by remember { mutableStateOf(initialColor) }
@@ -117,29 +115,27 @@ fun GraphScreen() {
     var selectionHighlightPointColor by remember { mutableStateOf(initialColor) }
     var lineChartBackgroundColor by remember { mutableStateOf(initialBackgroundColor) }
 
-    var xAxisLabelFontSize by remember { mutableStateOf(12.sp) }
-    var yAxisLabelFontSize by remember { mutableStateOf(12.sp) }
-
+    var showGridLines by remember { mutableStateOf(false) }
     var isDotted by remember { mutableStateOf(false) }
     var lineType by remember(key1 = isDotted) { mutableStateOf(LineType.SmoothCurve(isDotted = isDotted)) }
-    var gridLines: GridLines? by remember { mutableStateOf(null) }
+    var gridLines: GridLines by remember { mutableStateOf(GridLines(initialGridLinesColor)) }
 
 
     val xAxisData = AxisData.Builder().axisStepSize(xAxisStepSize).steps(dataPoints.size - 1)
         .labelData { value -> value.toString() }
-        .labelAndAxisLinePadding(xAxisLabelAndAxisLinePadding).axisLineColor(xAxisLineColor)
-        .axisLabelColor(MaterialTheme.colorScheme.primary).axisLabelFontSize(xAxisLabelFontSize)
+        .labelAndAxisLinePadding(15.dp).axisLineColor(xAxisLineColor)
+        .axisLabelColor(MaterialTheme.colorScheme.primary).axisLabelFontSize(12.sp)
         .build()
 
     val yAxisData =
-        AxisData.Builder().steps(steps).labelAndAxisLinePadding(yAxisLabelAndAxisLinePadding)
+        AxisData.Builder().steps(steps).labelAndAxisLinePadding(20.dp)
             .labelData { i ->
                 val yMin = dataPoints.minOf { it.y }
                 val yMax = dataPoints.maxOf { it.y }
                 val yScale = (yMax - yMin) / steps
                 ((i * yScale) + yMin).formatToSinglePrecision()
             }.axisLineColor(yAxisLineColor).axisLabelColor(MaterialTheme.colorScheme.primary)
-            .axisLabelFontSize(yAxisLabelFontSize).build()
+            .axisLabelFontSize(12.sp).build()
 
     val lineChartData = LineChartData(
         linePlotData = LinePlotData(
@@ -165,7 +161,7 @@ fun GraphScreen() {
         backgroundColor = lineChartBackgroundColor,
         xAxisData = xAxisData,
         yAxisData = yAxisData,
-        gridLines = gridLines
+        gridLines = if(showGridLines) gridLines else null
     )
 
     Column(
@@ -175,7 +171,7 @@ fun GraphScreen() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        if(showColorPicker) {
+        if (showColorPicker) {
             ColorPicker(currentColor = chartLineColor, onSaveColor = {
                 chartLineColor = it
                 showColorPicker = false
@@ -224,8 +220,8 @@ fun GraphScreen() {
                             onClick = {
                                 dataPoints.add(
                                     Point(
-                                        x = dataPointsCopy.last().x + 1f,
-                                        y = dataPointsCopy.last().y + 1f
+                                        x = dataPoints.last().x + 1f,
+                                        y = dataPoints.last().y + 1f
                                     )
                                 )
                             }, colors = ButtonDefaults.buttonColors(
@@ -256,7 +252,7 @@ fun GraphScreen() {
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(9f),
+                .weight(10f),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
@@ -322,12 +318,13 @@ fun GraphScreen() {
                             fontSize = 16.sp,
                             modifier = Modifier.weight(2f)
                         )
-                        Switch(thumbContent = {
-                            Icon(
-                                imageVector = if (isDotted) Icons.Default.Check else Icons.Default.Close,
-                                contentDescription = null
-                            )
-                        },
+                        Switch(
+                            thumbContent = {
+                                Icon(
+                                    imageVector = if (isDotted) Icons.Default.Check else Icons.Default.Close,
+                                    contentDescription = null
+                                )
+                            },
                             checked = isDotted,
                             onCheckedChange = { isDotted = it },
                             modifier = Modifier.weight(1f)
@@ -347,11 +344,11 @@ fun GraphScreen() {
                         )
                         Switch(thumbContent = {
                             Icon(
-                                imageVector = if (gridLines != null) Icons.Default.Check else Icons.Default.Close,
+                                imageVector = if (showGridLines) Icons.Default.Check else Icons.Default.Close,
                                 contentDescription = null
                             )
-                        }, checked = gridLines != null, onCheckedChange = {
-                            gridLines = if (it) GridLines(Color.LightGray) else null
+                        }, checked = showGridLines, onCheckedChange = {
+                            showGridLines = it
                         }, modifier = Modifier.weight(1f)
                         )
                     }
