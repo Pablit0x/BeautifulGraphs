@@ -1,9 +1,15 @@
 package com.ps.graphplayground.presentation.graph_screen
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,12 +20,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Remove
@@ -41,9 +50,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -65,13 +76,23 @@ import co.yml.charts.ui.linechart.model.SelectionHighlightPoint
 import co.yml.charts.ui.linechart.model.SelectionHighlightPopUp
 import co.yml.charts.ui.linechart.model.ShadowUnderLine
 import com.ps.graphplayground.R
+import com.ps.graphplayground.presentation.components.ColorPicker
 import com.ps.graphplayground.presentation.components.PointsItem
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun GraphScreen() {
+    val bottomSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
     var showPoints by remember { mutableStateOf(true) }
     var showSettings by remember { mutableStateOf(false) }
+    var showColorPicker by remember { mutableStateOf(false) }
+    var initialColor = MaterialTheme.colorScheme.primary
+    var initialBackgroundColor = MaterialTheme.colorScheme.surface
+
+    val scope = rememberCoroutineScope()
     var steps by remember { mutableStateOf(5) }
     var dataPoints = remember {
         mutableStateListOf(
@@ -89,6 +110,13 @@ fun GraphScreen() {
     var xAxisLabelAndAxisLinePadding by remember { mutableStateOf(15.dp) }
     var yAxisLabelAndAxisLinePadding by remember { mutableStateOf(20.dp) }
 
+    var chartLineColor by remember { mutableStateOf(initialColor) }
+    var xAxisLineColor by remember { mutableStateOf(initialColor) }
+    var yAxisLineColor by remember { mutableStateOf(initialColor) }
+    var intersectionPointColor by remember { mutableStateOf(initialColor) }
+    var selectionHighlightPointColor by remember { mutableStateOf(initialColor) }
+    var lineChartBackgroundColor by remember { mutableStateOf(initialBackgroundColor) }
+
     var xAxisLabelFontSize by remember { mutableStateOf(12.sp) }
     var yAxisLabelFontSize by remember { mutableStateOf(12.sp) }
 
@@ -99,8 +127,7 @@ fun GraphScreen() {
 
     val xAxisData = AxisData.Builder().axisStepSize(xAxisStepSize).steps(dataPoints.size - 1)
         .labelData { value -> value.toString() }
-        .labelAndAxisLinePadding(xAxisLabelAndAxisLinePadding)
-        .axisLineColor(MaterialTheme.colorScheme.primary)
+        .labelAndAxisLinePadding(xAxisLabelAndAxisLinePadding).axisLineColor(xAxisLineColor)
         .axisLabelColor(MaterialTheme.colorScheme.primary).axisLabelFontSize(xAxisLabelFontSize)
         .build()
 
@@ -111,9 +138,8 @@ fun GraphScreen() {
                 val yMax = dataPoints.maxOf { it.y }
                 val yScale = (yMax - yMin) / steps
                 ((i * yScale) + yMin).formatToSinglePrecision()
-            }.axisLineColor(MaterialTheme.colorScheme.primary)
-            .axisLabelColor(MaterialTheme.colorScheme.primary).axisLabelFontSize(yAxisLabelFontSize)
-            .build()
+            }.axisLineColor(yAxisLineColor).axisLabelColor(MaterialTheme.colorScheme.primary)
+            .axisLabelFontSize(yAxisLabelFontSize).build()
 
     val lineChartData = LineChartData(
         linePlotData = LinePlotData(
@@ -121,10 +147,10 @@ fun GraphScreen() {
                 Line(
                     dataPoints = dataPoints,
                     LineStyle(
-                        color = MaterialTheme.colorScheme.primary, lineType = lineType
+                        color = chartLineColor, lineType = lineType
                     ),
-                    intersectionPoint = IntersectionPoint(MaterialTheme.colorScheme.primary),
-                    selectionHighlightPoint = SelectionHighlightPoint(MaterialTheme.colorScheme.tertiary),
+                    intersectionPoint = IntersectionPoint(intersectionPointColor),
+                    selectionHighlightPoint = SelectionHighlightPoint(selectionHighlightPointColor),
                     shadowUnderLine = ShadowUnderLine(
                         alpha = 0.5f, brush = Brush.verticalGradient(
                             colors = listOf(
@@ -136,7 +162,7 @@ fun GraphScreen() {
                 )
             )
         ),
-        backgroundColor = MaterialTheme.colorScheme.surface,
+        backgroundColor = lineChartBackgroundColor,
         xAxisData = xAxisData,
         yAxisData = yAxisData,
         gridLines = gridLines
@@ -148,6 +174,15 @@ fun GraphScreen() {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        if(showColorPicker) {
+            ColorPicker(currentColor = chartLineColor, onSaveColor = {
+                chartLineColor = it
+                showColorPicker = false
+                showSettings = true
+            }, onCancel = { showColorPicker = false })
+        }
+
         LineChart(
             modifier = Modifier
                 .fillMaxWidth()
@@ -176,8 +211,8 @@ fun GraphScreen() {
 
             Spacer(modifier = Modifier.weight(0.5f))
 
-            Box(modifier = Modifier.weight(2f)) {
-                androidx.compose.animation.AnimatedVisibility(
+            Column(modifier = Modifier.weight(2f)) {
+                AnimatedVisibility(
                     visible = showPoints, enter = fadeIn(), exit = fadeOut()
                 ) {
                     Row(
@@ -249,12 +284,10 @@ fun GraphScreen() {
             }
         }
 
-        if (showSettings) {
-            val sheetScaffoldState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true
-            )
+        if (showSettings && !showColorPicker) {
 
-            ModalBottomSheet(sheetState = sheetScaffoldState,
+
+            ModalBottomSheet(sheetState = bottomSheetState,
                 onDismissRequest = { showSettings = false },
                 dragHandle = {
                     Column(
@@ -275,7 +308,8 @@ fun GraphScreen() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .fillMaxHeight(0.5f)
-                        .padding(16.dp)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -288,7 +322,12 @@ fun GraphScreen() {
                             fontSize = 16.sp,
                             modifier = Modifier.weight(2f)
                         )
-                        Switch(
+                        Switch(thumbContent = {
+                            Icon(
+                                imageVector = if (isDotted) Icons.Default.Check else Icons.Default.Close,
+                                contentDescription = null
+                            )
+                        },
                             checked = isDotted,
                             onCheckedChange = { isDotted = it },
                             modifier = Modifier.weight(1f)
@@ -306,9 +345,15 @@ fun GraphScreen() {
                             fontSize = 16.sp,
                             modifier = Modifier.weight(2f)
                         )
-                        Switch(checked = gridLines != null, onCheckedChange = {
+                        Switch(thumbContent = {
+                            Icon(
+                                imageVector = if (gridLines != null) Icons.Default.Check else Icons.Default.Close,
+                                contentDescription = null
+                            )
+                        }, checked = gridLines != null, onCheckedChange = {
                             gridLines = if (it) GridLines(Color.LightGray) else null
-                        }, modifier = Modifier.weight(1f))
+                        }, modifier = Modifier.weight(1f)
+                        )
                     }
 
                     Row(
@@ -328,36 +373,64 @@ fun GraphScreen() {
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.weight(1f)
                         ) {
-                            IconButton(
-                                onClick = { steps++ }
-                            ) {
+                            IconButton(onClick = { steps++ }) {
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowUp,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colorScheme.outline,
-                                        shape = RoundedCornerShape(100)
-                                    )
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .border(
+                                            width = 1.dp,
+                                            color = MaterialTheme.colorScheme.outline,
+                                            shape = RoundedCornerShape(100)
+                                        )
                                 )
                             }
                             Text(text = steps.toString())
-                            IconButton(
-                                onClick = { steps-- }
-                            ) {
+                            IconButton(onClick = { steps-- }) {
                                 Icon(
                                     imageVector = Icons.Default.KeyboardArrowDown,
                                     contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.border(
-                                        width = 1.dp,
-                                        color = MaterialTheme.colorScheme.outline,
-                                        shape = RoundedCornerShape(100)
-                                    )
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .border(
+                                            width = 1.dp,
+                                            color = MaterialTheme.colorScheme.outline,
+                                            shape = RoundedCornerShape(100)
+                                        )
                                 )
                             }
                         }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.line_color),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            modifier = Modifier.weight(2f)
+                        )
+
+                        Box(modifier = Modifier
+                            .size(32.dp)
+                            .padding(start = 24.dp, end = 24.dp)
+                            .clip(RoundedCornerShape(40))
+                            .weight(1f)
+                            .background(color = if (chartLineColor == Color.Unspecified) MaterialTheme.colorScheme.primary else chartLineColor)
+                            .border(
+                                color = MaterialTheme.colorScheme.onSurface,
+                                width = 2.dp,
+                                shape = RoundedCornerShape(40)
+                            )
+                            .clickable {
+                                showColorPicker = true
+                            })
                     }
                 }
             }

@@ -11,7 +11,7 @@ fun GraphPlaygroundNavigation() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Screen.GraphScreen.route) {
         composable(route = Screen.GraphScreen.route) {
-            GraphScreen()
+          GraphScreen()
         }
     }
 }

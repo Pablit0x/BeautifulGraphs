@@ -89,4 +89,7 @@ dependencies {
 
     // Extra icons
     implementation ("androidx.compose.material:material-icons-extended:1.4.3")
+
+    // Color Picker
+    implementation("com.github.skydoves:colorpicker-compose:1.0.4")
 }
