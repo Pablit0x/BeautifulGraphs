@@ -1,16 +1,12 @@
 package com.ps.graphplayground.presentation.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -21,11 +17,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import co.yml.charts.common.model.Point
 
 @Composable
@@ -43,15 +36,19 @@ fun PointsItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        Text(text = "Point $index:", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        Text(text = "Point $index:", style = MaterialTheme.typography.titleMedium)
 
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         OutlinedTextField(
             value = pointX, onValueChange = {
                 pointX = it
                 if (pointX.isNotEmpty()) {
-                    xOnChange(pointX.toFloat())
+                    try {
+                        val x = pointX.toFloat()
+                        xOnChange(x)
+                    } catch (ignored: Exception) {
+                    }
                 }
             }, keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Number
@@ -64,7 +61,11 @@ fun PointsItem(
             value = pointY, onValueChange = {
                 pointY = it
                 if (pointY.isNotEmpty()) {
-                    yOnChange(pointY.toFloat())
+                    try {
+                        val y = pointY.toFloat()
+                        yOnChange(y)
+                    } catch (ignored: Exception) {
+                    }
                 }
             }, keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Number
