@@ -6,8 +6,10 @@
     <string name="steps">Steps</string>
     <string name="points">Points</string>
     <string name="customise_chart">Customise Chart</string>
+    <string name="pick_color">Pick Color</string>
     <string name="line_color">Line color</string>
     <string name="line_type">Line type</string>
     <string name="straight">Straight</string>
-    <string name="smooth_curve">Smooth Curve</string>
+    <string name="smooth">Smooth</string>
+    <string name="point">Point</string>
 </resources>

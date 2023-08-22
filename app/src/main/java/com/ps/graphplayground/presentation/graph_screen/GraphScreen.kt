@@ -1,5 +1,6 @@
 package com.ps.graphplayground.presentation.graph_screen
 
+import android.graphics.drawable.Drawable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
@@ -57,12 +58,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.drawable.toBitmap
 import co.yml.charts.axis.AxisData
 import co.yml.charts.common.extensions.formatToSinglePrecision
 import co.yml.charts.common.model.Point
@@ -87,6 +93,7 @@ fun GraphScreen() {
     val bottomSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
+    val context = LocalContext.current
     var showPoints by remember { mutableStateOf(true) }
     var showSettings by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
@@ -175,13 +182,13 @@ fun GraphScreen() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        if (showColorPicker) {
-            ColorPicker(currentColor = chartLineColor, onSaveColor = {
-                chartLineColor = it
-                showColorPicker = false
-                showSettings = true
-            }, onCancel = { showColorPicker = false })
-        }
+//        if (showColorPicker) {
+//            ColorPicker(currentColor = chartLineColor, onSaveColor = {
+//                chartLineColor = it
+//                showColorPicker = false
+//                showSettings = true
+//            }, onCancel = { showColorPicker = false })
+//        }
 
         LineChart(
             modifier = Modifier
@@ -283,9 +290,7 @@ fun GraphScreen() {
             }
         }
 
-        if (showSettings && !showColorPicker) {
-
-
+        if (showSettings) {
             ModalBottomSheet(sheetState = bottomSheetState,
                 onDismissRequest = { showSettings = false },
                 dragHandle = {
@@ -296,8 +301,9 @@ fun GraphScreen() {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            stringResource(id = R.string.customise_chart),
-                            style = MaterialTheme.typography.titleLarge
+                            if (showColorPicker) stringResource(id = R.string.pick_color) else stringResource(
+                                id = R.string.customise_chart
+                            ), style = MaterialTheme.typography.titleLarge
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Divider()
@@ -308,195 +314,219 @@ fun GraphScreen() {
                         .fillMaxWidth()
                         .fillMaxHeight(0.5f)
                         .padding(16.dp),
-                    verticalArrangement = Arrangement.SpaceEvenly
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.dotted_line),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            modifier = Modifier.weight(2f)
-                        )
-                        Switch(thumbContent = {
-                            Icon(
-                                imageVector = if (isDotted) Icons.Default.Check else Icons.Default.Close,
-                                contentDescription = null
-                            )
-                        },
-                            checked = isDotted,
-                            onCheckedChange = { isDotted = it },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    if (showColorPicker) {
+                        ColorPicker(initialColor = chartLineColor, onAccept = {
+                            showColorPicker = false
+                        }, onChangeColor = {
+                            chartLineColor = it
+                        }, onCancel = {
+                            chartLineColor = it
+                            showColorPicker = false
+                        })
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.show_grid),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            modifier = Modifier.weight(2f)
-                        )
-                        Switch(thumbContent = {
-                            Icon(
-                                imageVector = if (showGridLines) Icons.Default.Check else Icons.Default.Close,
-                                contentDescription = null
-                            )
-                        }, checked = showGridLines, onCheckedChange = {
-                            showGridLines = it
-                        }, modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.steps),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            modifier = Modifier.weight(2f)
-                        )
+                    } else {
 
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            IconButton(onClick = { steps++ }) {
-                                Icon(
-                                    imageVector = Icons.Default.KeyboardArrowUp,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .border(
-                                            width = 1.dp,
-                                            color = MaterialTheme.colorScheme.outline,
-                                            shape = RoundedCornerShape(100)
-                                        )
-                                )
-                            }
-                            Text(text = steps.toString())
-                            IconButton(onClick = { steps-- }) {
-                                Icon(
-                                    imageVector = Icons.Default.KeyboardArrowDown,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .border(
-                                            width = 1.dp,
-                                            color = MaterialTheme.colorScheme.outline,
-                                            shape = RoundedCornerShape(100)
-                                        )
-                                )
+                            Text(
+                                text = stringResource(id = R.string.steps),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                modifier = Modifier.weight(2f)
+                            )
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                IconButton(onClick = { steps++ }) {
+                                    Icon(
+                                        imageVector = Icons.Default.KeyboardArrowUp,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .border(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.outline,
+                                                shape = RoundedCornerShape(100)
+                                            )
+                                    )
+                                }
+                                Text(text = steps.toString())
+                                IconButton(onClick = { steps-- }) {
+                                    Icon(
+                                        imageVector = Icons.Default.KeyboardArrowDown,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .border(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.outline,
+                                                shape = RoundedCornerShape(100)
+                                            )
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.line_color),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            modifier = Modifier.weight(2f)
-                        )
-
-                        Box(modifier = Modifier
-                            .size(32.dp)
-                            .padding(start = 24.dp, end = 24.dp)
-                            .clip(RoundedCornerShape(40))
-                            .weight(1f)
-                            .background(color = if (chartLineColor == Color.Unspecified) MaterialTheme.colorScheme.primary else chartLineColor)
-                            .border(
-                                color = MaterialTheme.colorScheme.onSurface,
-                                width = 2.dp,
-                                shape = RoundedCornerShape(40)
-                            )
-                            .clickable {
-                                showColorPicker = true
-                            })
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        var isLineMenuExpended by remember { mutableStateOf(false) }
-
-                        var lineTypes = remember{ mutableStateListOf<LineTypeMenuItem>(
-                            LineTypeMenuItem(
-                                text = "Straight",
-                                LineType.Straight(isDotted = isDotted)
-                            ),
-                            LineTypeMenuItem(
-                                text = "Smooth",
-                                LineType.SmoothCurve(isDotted = isDotted)
-                            )
-                        )}
-
-                        Text(
-                            text = stringResource(id = R.string.line_type),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            modifier = Modifier.weight(2f)
-                        )
-
-                        var selectedText by remember { mutableStateOf("Smooth") }
-
-                        Box(
-                            modifier = Modifier.weight(1f)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            ExposedDropdownMenuBox(
-                                expanded = isLineMenuExpended,
-                                onExpandedChange = {
-                                    isLineMenuExpended = !isLineMenuExpended
-                                }
-                            ) {
-                                OutlinedTextField(
-                                    shape = RoundedCornerShape(20),
-                                    value = selectedText,
-                                    onValueChange = {},
-                                    readOnly = true,
-                                    textStyle = TextStyle.Default.copy(
-                                        fontSize = 14.sp,
-                                        textAlign = TextAlign.Center
-                                    ),
-                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isLineMenuExpended) },
-                                    modifier = Modifier.menuAnchor()
-                                )
+                            Text(
+                                text = stringResource(id = R.string.line_color),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                modifier = Modifier.weight(2f)
+                            )
 
-                                ExposedDropdownMenu(
+                            Box(modifier = Modifier
+                                .size(32.dp)
+                                .padding(start = 24.dp, end = 24.dp)
+                                .clip(RoundedCornerShape(40))
+                                .weight(1f)
+                                .background(color = if (chartLineColor == Color.Unspecified) MaterialTheme.colorScheme.primary else chartLineColor)
+                                .border(
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    width = 2.dp,
+                                    shape = RoundedCornerShape(40)
+                                )
+                                .clickable {
+                                    showColorPicker = true
+                                })
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            var isLineMenuExpended by remember { mutableStateOf(false) }
+
+                            val lineTypes = remember {
+                                mutableStateListOf(
+                                    LineTypeMenuItem(
+                                        text = context.getString(R.string.straight),
+                                        type = LineType.Straight(isDotted = isDotted),
+                                        icon = R.drawable.straight_line
+                                    ), LineTypeMenuItem(
+                                        text = context.getString(R.string.smooth),
+                                        type = LineType.SmoothCurve(isDotted = isDotted),
+                                        icon = R.drawable.smooth_line
+                                    )
+                                )
+                            }
+
+                            Text(
+                                text = stringResource(id = R.string.line_type),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                modifier = Modifier.weight(2f)
+                            )
+
+                            var selectedText by remember { mutableStateOf(lineTypes[1].text) }
+
+                            Box(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                ExposedDropdownMenuBox(
                                     expanded = isLineMenuExpended,
-                                    onDismissRequest = { isLineMenuExpended = false }
-                                ) {
-                                    lineTypes.forEach { item ->
-                                        DropdownMenuItem(
-                                            text = { Text(text = item.text, textAlign = TextAlign.Center) },
-                                            onClick = {
+                                    onExpandedChange = {
+                                        isLineMenuExpended = !isLineMenuExpended
+                                    }) {
+                                    OutlinedTextField(
+                                        shape = RoundedCornerShape(20),
+                                        value = selectedText,
+                                        onValueChange = {},
+                                        readOnly = true,
+                                        textStyle = TextStyle.Default.copy(
+                                            fontSize = 14.sp, textAlign = TextAlign.Center
+                                        ),
+                                        trailingIcon = {
+                                            ExposedDropdownMenuDefaults.TrailingIcon(
+                                                expanded = isLineMenuExpended
+                                            )
+                                        },
+                                        modifier = Modifier.menuAnchor()
+                                    )
+
+                                    ExposedDropdownMenu(expanded = isLineMenuExpended,
+                                        onDismissRequest = { isLineMenuExpended = false }) {
+                                        lineTypes.forEach { item ->
+                                            DropdownMenuItem(leadingIcon = {
+                                                Icon(
+                                                    painter = painterResource(id = item.icon),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            }, text = {
+                                                Text(
+                                                    text = item.text, textAlign = TextAlign.Center
+                                                )
+                                            }, onClick = {
                                                 selectedText = item.text
                                                 lineType = item.type
                                                 isLineMenuExpended = false
-                                            }
-                                        )
+                                            })
+                                        }
                                     }
                                 }
                             }
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.dotted_line),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                modifier = Modifier.weight(2f)
+                            )
+                            Switch(thumbContent = {
+                                Icon(
+                                    imageVector = if (isDotted) Icons.Default.Check else Icons.Default.Close,
+                                    contentDescription = null
+                                )
+                            },
+                                checked = isDotted,
+                                onCheckedChange = { isDotted = it },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = stringResource(id = R.string.show_grid),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                modifier = Modifier.weight(2f)
+                            )
+                            Switch(thumbContent = {
+                                Icon(
+                                    imageVector = if (showGridLines) Icons.Default.Check else Icons.Default.Close,
+                                    contentDescription = null
+                                )
+                            }, checked = showGridLines, onCheckedChange = {
+                                showGridLines = it
+                            }, modifier = Modifier.weight(1f)
+                            )
                         }
                     }
                 }
@@ -506,5 +536,5 @@ fun GraphScreen() {
 }
 
 data class LineTypeMenuItem(
-    val text: String, val type: LineType
+    val text: String, val type: LineType, val icon: Int
 )

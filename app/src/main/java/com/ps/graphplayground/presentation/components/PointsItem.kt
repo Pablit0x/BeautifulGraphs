@@ -17,9 +17,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import co.yml.charts.common.model.Point
+import com.ps.graphplayground.R
 
 @Composable
 fun PointsItem(
@@ -36,23 +38,24 @@ fun PointsItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        Text(text = "Point $index:", style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = "${stringResource(id = R.string.point)} $index:",
+            style = MaterialTheme.typography.titleMedium
+        )
 
         Spacer(modifier = Modifier.width(12.dp))
 
         OutlinedTextField(
             value = pointX, onValueChange = {
                 pointX = it
-                if (pointX.isNotEmpty()) {
-                    try {
-                        val x = pointX.toFloat()
-                        xOnChange(x)
-                    } catch (ignored: Exception) {
-                    }
+                try {
+                    val x = pointX.toFloat()
+                    xOnChange(x)
+                } catch (ignored: Exception) {
                 }
             }, keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Number
-            ), label = { Text(text = "x") }, modifier = Modifier.weight(1f)
+            ), label = { Text(text = "X") }, modifier = Modifier.weight(1f)
         )
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -60,16 +63,13 @@ fun PointsItem(
         OutlinedTextField(
             value = pointY, onValueChange = {
                 pointY = it
-                if (pointY.isNotEmpty()) {
-                    try {
-                        val y = pointY.toFloat()
-                        yOnChange(y)
-                    } catch (ignored: Exception) {
-                    }
-                }
+                try {
+                    val y = pointY.toFloat()
+                    yOnChange(y)
+                } catch (ignored: Exception) { }
             }, keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Number
-            ), label = { Text(text = "y") }, modifier = Modifier.weight(1f)
+            ), label = { Text(text = "Y") }, modifier = Modifier.weight(1f)
         )
     }
 }
