@@ -95,7 +95,6 @@ fun GraphScreen() {
     var showColorPicker by remember { mutableStateOf(false) }
 
     val initialColor = MaterialTheme.colorScheme.primary
-    val initialBackgroundColor = MaterialTheme.colorScheme.surface
     val initialGridLinesColor = MaterialTheme.colorScheme.outline
 
     var steps by remember { mutableStateOf(5) }
@@ -111,25 +110,47 @@ fun GraphScreen() {
 
     var xAxisStepSize by remember { mutableStateOf(100.dp) }
 
-
     var chartLineColor by remember { mutableStateOf(initialColor) }
     var xAxisLineColor by remember { mutableStateOf(initialColor) }
     var yAxisLineColor by remember { mutableStateOf(initialColor) }
     var intersectionPointColor by remember { mutableStateOf(initialColor) }
-    var selectionHighlightPointColor by remember { mutableStateOf(initialColor) }
-    var lineChartBackgroundColor by remember { mutableStateOf(initialBackgroundColor) }
+
+    val colorLinearGradient = Brush.linearGradient(
+        listOf(
+            chartLineColor,
+            intersectionPointColor,
+            xAxisLineColor,
+            yAxisLineColor
+        )
+    )
 
     var showGridLines by remember { mutableStateOf(false) }
     var isDotted by remember { mutableStateOf(false) }
-    var lineType: LineType by remember(key1 = isDotted) {
-        mutableStateOf(
-            LineType.SmoothCurve(
-                isDotted = isDotted
+
+
+    val lineTypes = remember(isDotted) {
+        mutableStateListOf(
+            LineTypeMenuItem(
+                id = 0,
+                text = context.getString(R.string.smooth),
+                type = LineType.SmoothCurve(isDotted = isDotted),
+                icon = R.drawable.smooth_line
+            ), LineTypeMenuItem(
+                id = 1,
+                text = context.getString(R.string.straight),
+                type = LineType.Straight(isDotted = isDotted),
+                icon = R.drawable.straight_line
             )
         )
     }
-    var gridLines: GridLines by remember { mutableStateOf(GridLines(initialGridLinesColor)) }
 
+    var selectedIndex by remember { mutableStateOf(0) }
+    var selectedLineType by remember(
+        lineTypes,
+        selectedIndex
+    ) { mutableStateOf(lineTypes[selectedIndex]) }
+
+    val gridLines: GridLines by remember { mutableStateOf(GridLines(initialGridLinesColor)) }
 
     val xAxisData = AxisData.Builder().axisStepSize(xAxisStepSize).steps(dataPoints.size - 1)
         .labelData { value -> value.toString() }.labelAndAxisLinePadding(15.dp)
@@ -150,10 +171,10 @@ fun GraphScreen() {
                 Line(
                     dataPoints = dataPoints,
                     LineStyle(
-                        color = chartLineColor, lineType = lineType
+                        color = chartLineColor, lineType = selectedLineType.type
                     ),
                     intersectionPoint = IntersectionPoint(intersectionPointColor),
-                    selectionHighlightPoint = SelectionHighlightPoint(selectionHighlightPointColor),
+                    selectionHighlightPoint = SelectionHighlightPoint(MaterialTheme.colorScheme.secondary),
                     shadowUnderLine = ShadowUnderLine(
                         alpha = 0.5f, brush = Brush.verticalGradient(
                             colors = listOf(
@@ -165,7 +186,7 @@ fun GraphScreen() {
                 )
             )
         ),
-        backgroundColor = lineChartBackgroundColor,
+        backgroundColor = MaterialTheme.colorScheme.surface,
         xAxisData = xAxisData,
         yAxisData = yAxisData,
         gridLines = if (showGridLines) gridLines else null
@@ -310,14 +331,20 @@ fun GraphScreen() {
                         }, onChangeColor = {
                             chartLineColor = it
                             intersectionPointColor = it
-                            selectionHighlightPointColor = it
                             yAxisLineColor = it
                             xAxisLineColor = it
 
+                        }, onChangeLineColor = {
+                            chartLineColor = it
+                        }, onChangePointColor = {
+                            intersectionPointColor = it
+                        }, onChangeXAxisColor = {
+                            xAxisLineColor = it
+                        }, onChangeYAxisColor = {
+                            yAxisLineColor = it
                         }, onCancel = {
                             chartLineColor = it
                             intersectionPointColor = it
-                            selectionHighlightPointColor = it
                             yAxisLineColor = it
                             xAxisLineColor = it
                             showColorPicker = false
@@ -380,7 +407,7 @@ fun GraphScreen() {
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(
-                                text = stringResource(id = R.string.line_color),
+                                text = stringResource(id = R.string.graph_colors),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp,
                                 modifier = Modifier.weight(2f)
@@ -391,7 +418,7 @@ fun GraphScreen() {
                                 .padding(start = 24.dp, end = 24.dp)
                                 .clip(RoundedCornerShape(40))
                                 .weight(1f)
-                                .background(color = if (chartLineColor == Color.Unspecified) MaterialTheme.colorScheme.primary else chartLineColor)
+                                .background(colorLinearGradient)
                                 .border(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     width = 2.dp,
@@ -409,21 +436,6 @@ fun GraphScreen() {
                         ) {
                             var isLineMenuExpended by remember { mutableStateOf(false) }
 
-                            val lineTypes = remember {
-                                mutableStateListOf(
-                                    LineTypeMenuItem(
-                                        text = context.getString(R.string.smooth),
-                                        type = LineType.SmoothCurve(isDotted = isDotted),
-                                        icon = R.drawable.smooth_line
-                                    ),
-                                    LineTypeMenuItem(
-                                        text = context.getString(R.string.straight),
-                                        type = LineType.Straight(isDotted = isDotted),
-                                        icon = R.drawable.straight_line
-                                    )
-                                )
-                            }
-
                             Text(
                                 text = stringResource(id = R.string.line_type),
                                 fontWeight = FontWeight.Bold,
@@ -431,19 +443,17 @@ fun GraphScreen() {
                                 modifier = Modifier.weight(2f)
                             )
 
-                            var selectedText by remember { mutableStateOf(lineTypes[0].text) }
 
                             Box(
                                 modifier = Modifier.weight(1f)
                             ) {
-                                ExposedDropdownMenuBox(
-                                    expanded = isLineMenuExpended,
+                                ExposedDropdownMenuBox(expanded = isLineMenuExpended,
                                     onExpandedChange = {
                                         isLineMenuExpended = !isLineMenuExpended
                                     }) {
                                     OutlinedTextField(
                                         shape = RoundedCornerShape(20),
-                                        value = selectedText,
+                                        value = selectedLineType.text,
                                         onValueChange = {},
                                         readOnly = true,
                                         textStyle = TextStyle.Default.copy(
@@ -471,8 +481,7 @@ fun GraphScreen() {
                                                     text = item.text, textAlign = TextAlign.Center
                                                 )
                                             }, onClick = {
-                                                selectedText = item.text
-                                                lineType = item.type
+                                                selectedIndex = item.id
                                                 isLineMenuExpended = false
                                             })
                                         }
