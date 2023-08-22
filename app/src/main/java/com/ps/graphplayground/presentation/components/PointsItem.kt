@@ -18,7 +18,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import co.yml.charts.common.model.Point
 import com.ps.graphplayground.R
@@ -46,6 +49,10 @@ fun PointsItem(
         Spacer(modifier = Modifier.width(12.dp))
 
         OutlinedTextField(
+            textStyle = TextStyle.Default.copy(
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            ),
             value = pointX, onValueChange = {
                 pointX = it
                 try {
@@ -61,6 +68,10 @@ fun PointsItem(
         Spacer(modifier = Modifier.width(8.dp))
 
         OutlinedTextField(
+            textStyle = TextStyle.Default.copy(
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            ),
             value = pointY, onValueChange = {
                 pointY = it
                 try {

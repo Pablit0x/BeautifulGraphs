@@ -86,8 +86,9 @@ import co.yml.charts.ui.linechart.model.ShadowUnderLine
 import com.ps.graphplayground.R
 import com.ps.graphplayground.presentation.components.ColorPicker
 import com.ps.graphplayground.presentation.components.PointsItem
+import com.ps.graphplayground.presentation.model.LineTypeMenuItem
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GraphScreen() {
     val bottomSheetState = rememberModalBottomSheetState(
@@ -181,15 +182,6 @@ fun GraphScreen() {
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-//        if (showColorPicker) {
-//            ColorPicker(currentColor = chartLineColor, onSaveColor = {
-//                chartLineColor = it
-//                showColorPicker = false
-//                showSettings = true
-//            }, onCancel = { showColorPicker = false })
-//        }
-
         LineChart(
             modifier = Modifier
                 .fillMaxWidth()
@@ -322,8 +314,17 @@ fun GraphScreen() {
                             showColorPicker = false
                         }, onChangeColor = {
                             chartLineColor = it
+                            intersectionPointColor = it
+                            selectionHighlightPointColor = it
+                            yAxisLineColor = it
+                            xAxisLineColor = it
+
                         }, onCancel = {
                             chartLineColor = it
+                            intersectionPointColor = it
+                            selectionHighlightPointColor = it
+                            yAxisLineColor = it
+                            xAxisLineColor = it
                             showColorPicker = false
                         })
 
@@ -416,13 +417,14 @@ fun GraphScreen() {
                             val lineTypes = remember {
                                 mutableStateListOf(
                                     LineTypeMenuItem(
-                                        text = context.getString(R.string.straight),
-                                        type = LineType.Straight(isDotted = isDotted),
-                                        icon = R.drawable.straight_line
-                                    ), LineTypeMenuItem(
                                         text = context.getString(R.string.smooth),
                                         type = LineType.SmoothCurve(isDotted = isDotted),
                                         icon = R.drawable.smooth_line
+                                    ),
+                                    LineTypeMenuItem(
+                                        text = context.getString(R.string.straight),
+                                        type = LineType.Straight(isDotted = isDotted),
+                                        icon = R.drawable.straight_line
                                     )
                                 )
                             }
@@ -434,7 +436,7 @@ fun GraphScreen() {
                                 modifier = Modifier.weight(2f)
                             )
 
-                            var selectedText by remember { mutableStateOf(lineTypes[1].text) }
+                            var selectedText by remember { mutableStateOf(lineTypes[0].text) }
 
                             Box(
                                 modifier = Modifier.weight(1f)
@@ -534,7 +536,3 @@ fun GraphScreen() {
         }
     }
 }
-
-data class LineTypeMenuItem(
-    val text: String, val type: LineType, val icon: Int
-)
