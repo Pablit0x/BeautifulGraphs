@@ -108,8 +108,6 @@ fun GraphScreen() {
         )
     }
 
-    var xAxisStepSize by remember { mutableStateOf(100.dp) }
-
     var chartLineColor by remember { mutableStateOf(initialColor) }
     var xAxisLineColor by remember { mutableStateOf(initialColor) }
     var yAxisLineColor by remember { mutableStateOf(initialColor) }
@@ -152,7 +150,7 @@ fun GraphScreen() {
 
     val gridLines: GridLines by remember { mutableStateOf(GridLines(initialGridLinesColor)) }
 
-    val xAxisData = AxisData.Builder().axisStepSize(xAxisStepSize).steps(dataPoints.size - 1)
+    val xAxisData = AxisData.Builder().axisStepSize(100.dp).steps(dataPoints.size - 1)
         .labelData { value -> value.toString() }.labelAndAxisLinePadding(15.dp)
         .axisLineColor(xAxisLineColor).axisLabelColor(MaterialTheme.colorScheme.primary)
         .axisLabelFontSize(12.sp).build()
