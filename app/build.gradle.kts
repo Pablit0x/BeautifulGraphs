@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.kapt3.base.Kapt.kapt
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -72,23 +70,23 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     // Charts
-    implementation ("co.yml:ycharts:2.1.0")
+    implementation("co.yml:ycharts:2.1.0")
 
     // Dagger Hilt
-    implementation ("androidx.hilt:hilt-navigation-compose:1.0.0")
-    implementation ("com.google.dagger:hilt-android:2.44.2")
-    kapt ("com.google.dagger:hilt-android-compiler:2.44")
-    kapt ("androidx.hilt:hilt-compiler:1.0.0")
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+    implementation("com.google.dagger:hilt-android:2.44.2")
+    kapt("com.google.dagger:hilt-android-compiler:2.44")
+    kapt("androidx.hilt:hilt-compiler:1.0.0")
 
     // Lifecycle aware flow
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0-alpha01")
 
     // Navigation
-    implementation ("androidx.navigation:navigation-compose:2.6.0")
-    implementation ("com.google.accompanist:accompanist-navigation-animation:0.27.0")
+    implementation("androidx.navigation:navigation-compose:2.6.0")
+    implementation("com.google.accompanist:accompanist-navigation-animation:0.27.0")
 
     // Extra icons
-    implementation ("androidx.compose.material:material-icons-extended:1.4.3")
+    implementation("androidx.compose.material:material-icons-extended:1.4.3")
 
     // Color Picker
     implementation("com.github.skydoves:colorpicker-compose:1.0.4")

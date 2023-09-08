@@ -77,7 +77,8 @@ fun PointsItem(
                 try {
                     val y = pointY.toFloat()
                     yOnChange(y)
-                } catch (ignored: Exception) { }
+                } catch (ignored: Exception) {
+                }
             }, keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Number
             ), label = { Text(text = "Y") }, modifier = Modifier.weight(1f)

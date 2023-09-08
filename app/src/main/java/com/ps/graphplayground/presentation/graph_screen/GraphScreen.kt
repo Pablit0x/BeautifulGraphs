@@ -501,12 +501,13 @@ fun GraphScreen() {
                                 fontSize = 16.sp,
                                 modifier = Modifier.weight(2f)
                             )
-                            Switch(thumbContent = {
-                                Icon(
-                                    imageVector = if (isDotted) Icons.Default.Check else Icons.Default.Close,
-                                    contentDescription = null
-                                )
-                            },
+                            Switch(
+                                thumbContent = {
+                                    Icon(
+                                        imageVector = if (isDotted) Icons.Default.Check else Icons.Default.Close,
+                                        contentDescription = null
+                                    )
+                                },
                                 checked = isDotted,
                                 onCheckedChange = { isDotted = it },
                                 modifier = Modifier.weight(1f)
